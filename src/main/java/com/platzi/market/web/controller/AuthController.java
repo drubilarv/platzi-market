@@ -11,6 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,9 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
     private UserDetailsService userDetailsService;
 
     @Autowired
@@ -32,6 +36,7 @@ public class AuthController {
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request){
         try{
+
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(),request.getPassword()));
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
             String jwt = jwtUtil.generateToken(userDetails);
@@ -39,10 +44,10 @@ public class AuthController {
             return new ResponseEntity<>(new AuthenticationResponse(jwt),HttpStatus.OK);
 
         }catch (BadCredentialsException e){
-
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(new AuthenticationResponse(e.getMessage()),HttpStatus.FORBIDDEN);
         }
 
     }
+
 
 }
